@@ -1,78 +1,43 @@
 #!/usr/bin/env nextflow
 
-/*What it does*/
-
-
-/***How to run***/
-/*locally - conda activate bio*/
-/*nextflow run main.nf (plus change any params here) -resume*/
+/*
+How to run
+conda activate bio
+open Docker desktop
+nextflow run main.nf
+script will also use info from nextflow.config
+this specifies to use docker
+and the containers for each process
+*/
 
 /***Inputs***/
 params.R1reads = "/Users/annasyme/data/R1.fq"
-params.R2reads = "/Users/annasyme/data/R2.fq"
-params.nanoreads = "/Users/annasyme/data/nanopore.fastq"
 
 /***Outputs***/
 /* script output is in 'work' */
 /* this outdir param specifies where certain file symlinks are saved */
 /* note: can't unzip in here */
-params.outdir = '/Users/annasyme/nftesting/results'
+/* note this work dir is listed in the .gitignore.txt */
+
+params.outdir = '/Users/annasyme/nftesting/new-results'
+
 
 /***Channels and Processes***/
+channel1 = Channel.fromPath(params.R1reads)
 
-ch_R1_reads1 = Channel.fromPath(params.R1reads)
-ch_R2_reads1 = Channel.fromPath(params.R2reads)
-ch_nano_reads1 = Channel.fromPath(params.nanoreads)
+process get_stats {
 
-process read_stats_1 {
-    publishDir "${params.outdir}/read_stats_1"
-    
+    publishDir "${params.outdir}/get_stats"
+
     input:
-    file R1 from ch_R1_reads1
-    file R2 from ch_R2_reads1
-    file nano from ch_nano_reads1
+    file R1 from channel1
 
     output:
     file "R1stats.txt"
-    file "R2stats.txt" 
-    file "nanostats.txt"
 
     script:
     """
     seqkit stats $R1 > R1stats.txt
-    seqkit stats $R2 > R2stats.txt
-    seqkit stats $nano > nanostats.txt
     """
-}
+}       
 
-ch_nano_reads2 = Channel.fromPath(params.nanoreads)
-
-process assemble_1 {
-    publishDir "${params.outdir}/assemble_1"
-    
-    input:
-    file reads from ch_nano_reads2
-
-    output:
-    path "flye001"
-    file "flye001/assembly.fasta" into assembly1_ch
-
-    script:
-    """
-    flye --nano-raw $reads  --genome-size 150000 --out-dir flye001
-    """
-}
-
-ch_nano_reads3 = Channel.fromPath(params.nanoreads)
-
-process raconpolish1 {
-}
-
-process raconpolish2 {
-}
-
-process filter_short_reads {
-}
-
-process pilonpolish1 {
-}
